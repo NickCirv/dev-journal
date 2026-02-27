@@ -1,18 +1,39 @@
+![Banner](banner.svg)
+
 # dev-journal
 
-Auto-generated daily dev journal from git activity. Never write standup notes again.
+> Auto-generated daily dev journal from git activity.
 
-![dev-journal banner](banner.svg)
+[![npm version](https://img.shields.io/npm/v/dev-journal?color=%236EE7B7&label=npm)](https://www.npmjs.com/package/dev-journal)
+[![license](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
+[![GitHub stars](https://img.shields.io/github/stars/NickCirv/dev-journal?style=flat)](https://github.com/NickCirv/dev-journal/stargazers)
 
 ---
 
-## What it does
+## The Problem
+
+Standup in 10 minutes. "What did I do yesterday?" You stare at Slack. You check Jira. You lie. What if your git history could write your standup for you?
 
 `dev-journal` scans all git repos under your working directory, reads commit history, and uses Claude (Haiku) to generate a natural-language journal entry. No manual note-taking. No standup anxiety.
 
 ---
 
-## Example output
+## Quick Start
+
+```bash
+# Set your API key once
+export ANTHROPIC_API_KEY=sk-ant-...
+
+# Generate today's journal
+npx dev-journal today
+
+# Get standup-ready output for Slack
+npx dev-journal standup
+```
+
+---
+
+## Example Output
 
 ### `npx dev-journal today`
 
@@ -21,19 +42,22 @@ Auto-generated daily dev journal from git activity. Never write standup notes ag
 
 ## Summary
 
-Spent the day building out the Jarvis Telegram command layer and fixing a persistent TDZ bug in the agent viewer dashboard. Also cleaned up 22 stale skills from the dispatch table and expanded brain-os.md routing to cover 85+ intents.
+Spent the day building out the Jarvis Telegram command layer and fixing a persistent
+TDZ bug in the agent viewer dashboard. Also cleaned up 22 stale skills from the
+dispatch table and expanded brain-os.md routing to cover 85+ intents.
 
 ## Projects Touched
 
-- **agent-viewer** — Unified Telegram bot + jarvis-brain into a single Express server with an 8-module command layer
+- **agent-viewer** — Unified Telegram bot + jarvis-brain into a single Express server
+  with an 8-module command layer
 - **dev-journal** — Initial scaffolding: collector, writer, storage, streak modules
 
 ## Key Changes
 
-- Extracted `router.js`, `capture.js`, `projects.js` from monolithic `server.js` to reduce coupling
-- Fixed TDZ crash by consolidating all `let`/`const` declarations into a STATE block at line 3668
+- Extracted `router.js`, `capture.js`, `projects.js` from monolithic `server.js`
+- Fixed TDZ crash by consolidating all declarations into a STATE block at line 3668
 - Added exponential backoff (1min→10min) to research polling in agent viewer
-- Retired `jarvis-bot.py` — archived and disabled LaunchAgent plist to prevent 409 conflicts
+- Retired `jarvis-bot.py` — archived and disabled LaunchAgent plist
 - Expanded brain-os.md dispatch from 30 → 85+ entries across 13 sections
 
 ## Stats
@@ -47,13 +71,11 @@ Spent the day building out the Jarvis Telegram command layer and fixing a persis
 | Files changed | 23 |
 ```
 
----
-
 ### `npx dev-journal standup`
 
 ```
 **Yesterday:**
-- Completed agent viewer audit — fixed 17 JS errors, consolidated TDZ, added mobile More tab
+- Completed agent viewer audit — fixed 17 JS errors, added mobile More tab
 - Retired standalone Jarvis bot, unified into server.js with 8-module command layer
 - Ran system-wide vault audit — fixed 8 stale files, created 6 CLAUDE.md files
 
@@ -64,8 +86,6 @@ Spent the day building out the Jarvis Telegram command layer and fixing a persis
 
 **Blockers:** None
 ```
-
----
 
 ### `npx dev-journal streak`
 
@@ -87,104 +107,43 @@ Spent the day building out the Jarvis Telegram command layer and fixing a persis
 
 ---
 
-## Install
+## Features
 
-```bash
-# Run without installing
-npx dev-journal today
+- Scans all git repos under your working directories (max depth 3)
+- Natural-language summaries via Claude Haiku (cheapest model — no overkill)
+- Standup format ready to paste into Slack or Notion
+- Weekly summaries with shipped work highlights and inferred next steps
+- 28-day coding streak calendar
+- Flat-file storage at `~/.dev-journal/entries/` — readable without the CLI
+- Export to a single markdown file for a given date range
 
-# Or install globally
-npm install -g dev-journal
-```
+---
 
-**Requires:** Node 18+, `ANTHROPIC_API_KEY` env var.
+## How It Works
 
-```bash
-export ANTHROPIC_API_KEY=sk-ant-...
-```
+1. **Collector** (`src/collector.js`) — finds all git repos under target directories, runs `git log --numstat` to get commits, file changes, and line counts. Uses `execFileSync` with argument arrays — no shell injection.
+2. **Writer** (`src/writer.js`) — sends structured activity data to `claude-haiku-4-5` via the Anthropic SDK. Generates natural prose with consistent formatting.
+3. **Storage** (`src/storage.js`) — reads and writes entries to `~/.dev-journal/entries/YYYY-MM-DD.md`. Simple flat-file store, no database.
+4. **Streak** (`src/streak.js`) — scans commit history for the last 365 days, calculates current and longest streaks, renders a block-character calendar.
 
 ---
 
 ## Commands
 
-### `dev-journal today`
+| Command | Description |
+|---------|-------------|
+| `dev-journal today` | Generate today's journal from commits since midnight |
+| `dev-journal week` | Weekly summary of the last 7 days |
+| `dev-journal standup` | Formatted Yesterday / Today / Blockers for Slack |
+| `dev-journal streak` | Show coding streak with 28-day commit calendar |
+| `dev-journal export` | Export entries as a single markdown file |
 
-Generate today's journal entry from commits made since midnight.
-
-```bash
-npx dev-journal today
-npx dev-journal today --force          # Regenerate if entry exists
-npx dev-journal today --no-save        # Print only, don't write to disk
-npx dev-journal today -p ~/repos,~/work  # Scan specific directories
-```
-
-Entries are saved to `~/.dev-journal/entries/YYYY-MM-DD.md`.
-
----
-
-### `dev-journal week`
-
-Weekly summary of the last 7 days. Highlights shipped work, identifies in-progress threads, and infers next steps.
-
-```bash
-npx dev-journal week
-npx dev-journal week -p ~/repos
-```
-
----
-
-### `dev-journal standup`
-
-Formatted standup update with Yesterday / Today / Blockers. Ready to paste into Slack.
-
-```bash
-npx dev-journal standup
-npx dev-journal standup -p ~/repos,~/work
-```
-
----
-
-### `dev-journal export`
-
-Export stored journal entries as a single markdown file.
-
-```bash
-npx dev-journal export                              # Last 30 days, stdout
-npx dev-journal export --from 2026-02-01 --to 2026-02-28
-npx dev-journal export -o ./february-journal.md    # Write to file
-```
-
----
-
-### `dev-journal streak`
-
-Show your coding streak with a 28-day commit calendar.
-
-```bash
-npx dev-journal streak
-npx dev-journal streak -p ~/repos
-```
-
----
-
-## How it works
-
-1. **Collector** (`src/collector.js`) — Finds all git repos under the target directories (max depth 3). Runs `git log` with `--numstat` to get commits, file changes, and line counts. No shell injection — uses `execFileSync` with argument arrays.
-
-2. **Writer** (`src/writer.js`) — Sends structured activity data to `claude-haiku-4-5` via the Anthropic SDK. Haiku is the cheapest model — journal writing doesn't need Opus. Generates natural prose with consistent formatting.
-
-3. **Storage** (`src/storage.js`) — Reads and writes entries to `~/.dev-journal/entries/YYYY-MM-DD.md`. Simple flat-file store, no database.
-
-4. **Streak** (`src/streak.js`) — Scans commit history for the last 365 days across all repos. Calculates current and longest streaks. Renders a block-character calendar.
-
----
-
-## Options
+### Options
 
 | Flag | Description |
 |------|-------------|
-| `-p, --paths <paths>` | Comma-separated list of directories to scan for git repos |
-| `--force` | Re-generate an entry even if one exists for the date |
+| `-p, --paths <paths>` | Comma-separated directories to scan for git repos |
+| `--force` | Re-generate even if an entry exists for the date |
 | `--no-save` | Print output without writing to `~/.dev-journal/` |
 | `--from <date>` | Start date for export (YYYY-MM-DD) |
 | `--to <date>` | End date for export (YYYY-MM-DD) |
@@ -192,9 +151,18 @@ npx dev-journal streak -p ~/repos
 
 ---
 
-## Storage
+## Requirements
 
-Journal entries live in `~/.dev-journal/entries/`. Each entry is a standalone markdown file — readable without the CLI, portable, and easy to back up.
+- Node.js 18+
+- `ANTHROPIC_API_KEY` environment variable
+
+```bash
+export ANTHROPIC_API_KEY=sk-ant-...
+```
+
+---
+
+## Storage
 
 ```
 ~/.dev-journal/
@@ -204,6 +172,17 @@ Journal entries live in `~/.dev-journal/entries/`. Each entry is a standalone ma
     2026-02-27.md
     week-2026-02-24.md
 ```
+
+Each entry is a standalone markdown file — readable without the CLI, portable, easy to back up.
+
+---
+
+## See Also
+
+- [100x-dev](https://github.com/NickCirv/100x-dev) — measure your AI-powered velocity with a real multiplier
+- [pr-poet](https://github.com/NickCirv/pr-poet) — auto-generate PR descriptions from your diffs
+- [vibe-coding](https://github.com/NickCirv/vibe-coding) — ship entire features from a single prompt
+- [blame-ai](https://github.com/NickCirv/blame-ai) — find out which parts of your codebase Claude wrote
 
 ---
 
