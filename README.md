@@ -1,45 +1,67 @@
-<div align="center">
+![dev-journal — Nicholas Ashkar repository collection](assets/nicholas-ashkar/banner.png)
 
 # dev-journal
 
-**Turn your git history into daily dev journals and standup notes — no manual writing.**
+Turn Git activity into draft journal entries and standup summaries using an Anthropic model.
 
-[![license](https://img.shields.io/badge/license-MIT-blue?labelColor=0B0A09)](LICENSE)
-[![node](https://img.shields.io/badge/node-%3E%3D18-brightgreen?labelColor=0B0A09)](https://nodejs.org)
 
-</div>
-
-## Install
-
-```bash
-# Requires an Anthropic API key
-export ANTHROPIC_API_KEY=your-key-here
-
-npx github:NickCirv/dev-journal <command>
-```
-
-## Usage
-
-```bash
-npx github:NickCirv/dev-journal today      # journal entry from today's commits
-npx github:NickCirv/dev-journal standup    # Yesterday / Today / Blockers for standups
-npx github:NickCirv/dev-journal week       # weekly summary
-npx github:NickCirv/dev-journal streak     # 28-day commit calendar
-npx github:NickCirv/dev-journal export     # dump entries to a markdown file
-```
-
-| Flag | Description |
-|------|-------------|
-| `-p, --paths <paths>` | Comma-separated directories to scan for git repos |
-| `--force` | Re-generate even if an entry already exists for today |
-| `--no-save` | Print output without writing to `~/.dev-journal/` |
-| `--from <date>` | Start date for export (YYYY-MM-DD) |
-| `--to <date>` | End date for export (YYYY-MM-DD) |
-| `-o, --output <file>` | Write export to a file instead of stdout |
+<a id="usage"></a>
 
 ## What it does
 
-`dev-journal` scans git repos under your working directories (up to depth 3), reads `git log --numstat` output, and sends structured activity data to Claude Haiku to produce natural-language journal entries. Entries are saved as plain markdown files at `~/.dev-journal/entries/YYYY-MM-DD.md` — readable without the CLI. The `streak` command calculates current and longest commit streaks and renders a block-character 28-day calendar.
+Scans configured directories for repositories, collects commit metadata and change counts, and offers today, week, standup, streak and export commands. Generated entries are stored as Markdown under ~/.dev-journal; export can write a chosen file. See the pinned [implementation](https://github.com/NickCirv/dev-journal/blob/acb18e728a44e6fdf488d3715eee508c24a7e5d1/bin/journal.js).
 
----
-<sub>3 dependencies · Node ≥18 · MIT · by <a href="https://github.com/NickCirv">NickCirv</a></sub>
+
+<a id="install"></a>
+
+## Quickstart
+
+Node requirement from the inspected manifest: **`>=20`**. Requires Git. Generation uses the Anthropic SDK and its API-key configuration; use only repositories whose activity you are authorized to send. --paths limits the scan.
+
+The following example is **source-inspected, not executed**. It uses a pinned checkout; npm package publication is not assumed. Replace project paths or provide the stated input fixtures before running it.
+
+```bash
+git clone https://github.com/NickCirv/dev-journal.git
+cd dev-journal
+git checkout acb18e728a44e6fdf488d3715eee508c24a7e5d1
+npm install --ignore-scripts
+node bin/journal.js streak
+```
+
+Dependencies are installed with lifecycle scripts disabled in this recipe. Read the package scripts before enabling any lifecycle step required by your environment.
+
+## Usage and reference
+
+`dev-journal` are the executable names declared by the package. [Command reference](docs/REFERENCE.md) covers source-backed options and entry points.
+
+| Control | Behavior in the inspected implementation |
+| --- | --- |
+| `today / week / standup` | Generate an Anthropic-assisted activity draft |
+| `streak` | Calculate commit streak information |
+| `export` | Read saved entries into Markdown |
+| `--paths LIST` | Limit repository discovery roots |
+
+## Limits and operational notes
+
+The writing commands send collected repository activity to Anthropic and may incur API charges. Review generated prose before sharing it; commit activity is not a complete record of work. Streak uses Git history and does not require generated prose.
+
+## Development
+
+No runtime checks were executed for this documentation review. The committed smoke test checks entrypoint JavaScript syntax; it does not exercise the command behavior.
+
+| Script | Declared command |
+| --- | --- |
+| `start` | `node bin/journal.js` |
+| `test` | `node --test` |
+
+Work from the pinned source, keep changes focused, and reproduce the affected behavior with a small fixture before proposing a change. Existing contribution and security policies remain authoritative where present.
+
+## Research and status
+
+[Research record](docs/RESEARCH.md) identifies the inspected revision, source evidence, documentation disposition and verification gaps. Static inspection supports the descriptions here; runtime behavior, dependency installation and current hosted services remain unverified.
+
+## License and author
+
+[License](https://github.com/NickCirv/dev-journal/blob/acb18e728a44e6fdf488d3715eee508c24a7e5d1/LICENSE)
+
+[Nicholas Ashkar](https://nicholashkar.com) · Applied AI, systems and consulting.
